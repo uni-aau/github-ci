@@ -55,7 +55,7 @@ task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
 
 sonarqube {
   properties {
-    property "sonar.projectKey", "testorg-djamn_testrepo2"
+    property "sonar.projectKey", "testorg-djamn_Gitlab-CI"
     property "sonar.organization", "testorg-djamn"
     property "sonar.host.url", "https://sonarcloud.io"
     property "sonar.java.coveragePlugin", "jacoco"
