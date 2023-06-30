@@ -148,6 +148,9 @@ Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werd
 - Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt
   - Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser **entfernt** werden, da der Testfall noch mit JUnit 4 läuft
 - Eine laufende CI kann in diesem Repository gefunden werden
+- ./gradlew Permission denied
+  - Rechte müssen vergeben werden: ``chmod +x gradlew``
+  - Oder auch ``git update-index --chmod=+x gradlew``
 
 
 Bei Fehlern bitte Issue erstellen!
