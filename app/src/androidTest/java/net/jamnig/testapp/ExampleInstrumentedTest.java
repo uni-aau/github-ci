@@ -1,4 +1,4 @@
-package net.jamnig.testappnew;
+package net.jamnig.testapp;
 
 import android.content.Context;
 
@@ -15,12 +15,12 @@ import static org.junit.Assert.*;
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-@RunWith(AndroidJUnit4.class)
+//@RunWith(AndroidJUnit4.class)
 public class ExampleInstrumentedTest {
     @Test
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("net.jamnig.testappnew", appContext.getPackageName());
+        assertEquals("net.jamnig.testapp", appContext.getPackageName());
     }
 }

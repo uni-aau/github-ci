@@ -1,17 +1,17 @@
 plugins {
     id 'com.android.application'
     id 'jacoco'
-    id 'org.sonarqube' version '3.5.0.2730'
+    id "org.sonarqube" version "4.4.1.3373"
 }
 
 android {
-    namespace 'net.jamnig.testappnew'
-    compileSdk 33
+    namespace 'net.jamnig.testapp'
+    compileSdk 34
 
     defaultConfig {
-        applicationId "net.jamnig.testappnew"
+        applicationId "net.jamnig.testapp"
         minSdk 29
-        targetSdk 33
+        targetSdk 34
         versionCode 1
         versionName "1.0"
 
@@ -25,8 +25,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     testOptions {
@@ -40,7 +40,7 @@ android {
 task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
 
     reports {
-        xml.enabled true
+        xml.required = true
         xml.destination file("${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
     }
 
@@ -53,20 +53,19 @@ task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
     executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
 }
 
-sonarqube {
-  properties {
-    property "sonar.projectKey", "testorg-djamn_Gitlab-CI"
-    property "sonar.organization", "testorg-djamn"
-    property "sonar.host.url", "https://sonarcloud.io"
-    property "sonar.java.coveragePlugin", "jacoco"
-    property "sonar.coverage.jacoco.xmlReportPaths", "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
-  }
+sonar {
+    properties {
+        property "sonar.projectKey", "uni-aau_github-ci"
+        property "sonar.organization", "uni-aau"
+        property "sonar.host.url", "https://sonarcloud.io"
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+    }
 }
 
 dependencies {
-
     implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
