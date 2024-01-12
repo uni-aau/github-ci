@@ -1,4 +1,4 @@
-package net.jamnig.testappnew;
+package net.jamnig.testapp;
 
 import android.content.Context;
 
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("net.jamnig.testappnew", appContext.getPackageName());
+        assertEquals("net.jamnig.testapp", appContext.getPackageName());
     }
 }
