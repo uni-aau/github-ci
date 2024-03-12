@@ -16,10 +16,10 @@ Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben d
 - Ins Feld **Name** kommt ``SONAR_TOKEN`` und bei **Value** der ``Key`` von SonarCloud
   
 ## Gradle Project Änderungen
-- In diesem Repository wurde **Java Version 17**, **Gradle Version 8.0**, **Android Gradle Plugin Version 8.1.0**, **SDK Version (target) 34** **SDK Version (min) 29** verwendet
+- In diesem Repository wurde **Java Version 17**, **Gradle Version 8.0**, **Android Gradle Plugin Version 8.3.0**, **SDK Version (target) 34** **SDK Version (min) 29** verwendet
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
 - In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Gradle -> build.yml`` kopiert werden:
-```java name: SonarCloud
+```yml name: SonarCloud
 name: SonarCloud
 on:
   push:
@@ -61,7 +61,7 @@ jobs:
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
 - Weiters muss die **app/build.gradle** Datei erweitert werden. Da diese (hier in SE2) ebenso um Jacoco erweitert wird, muss dies ebenfalls noch beachtet werden
 - Im Folgenden File werden die Änderungen mit Kommentaren markiert
-```java
+```gradle
 plugins {
     id 'com.android.application'
     // Beide ids hinzufügen - Auf sonarqube Version achten (Siehe Sonarcloud -> Gradle)
@@ -104,7 +104,8 @@ android {
     }
 }
 // Hinzufügen + Überprüfen, ob xml.destination Path korrekt ist
-task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
+tasks.register('jacocoTestReport', JacocoReport) {
+    dependsOn 'testDebugUnitTest'
 
     reports {
         xml.required = true
@@ -112,12 +113,12 @@ task jacocoTestReport(type: JacocoReport, dependsOn: 'testDebugUnitTest') {
     }
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug", excludes: fileFilter)
+    def debugTree = fileTree(dir: "${project.layout.buildDirectory}/intermediates/javac/debug", excludes: fileFilter)
     def mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.from = files([mainSrc])
     classDirectories.from = files([debugTree])
-    executionData.from = files("${buildDir}/jacoco/testDebugUnitTest.exec")
+    executionData.from = files("${project.layout.buildDirectory}/jacoco/testDebugUnitTest.exec")
 }
 
 // Sonarqube-Werte müssen von Sonarcloud unter Gradle kopiert werden. Diese sind individuell 
