@@ -113,12 +113,12 @@ tasks.register('jacocoTestReport', JacocoReport) {
     }
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${project.layout.buildDirectory}/intermediates/javac/debug", excludes: fileFilter)
+    def debugTree = fileTree(dir: "${project.layout.buildDirectory.get().asFile}/intermediates/javac/debug", excludes: fileFilter)
     def mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.from = files([mainSrc])
     classDirectories.from = files([debugTree])
-    executionData.from = files("${project.layout.buildDirectory}/jacoco/testDebugUnitTest.exec")
+    executionData.from = files("${project.layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec")
 }
 
 // Sonarqube-Werte müssen von Sonarcloud unter Gradle kopiert werden. Diese sind individuell 
