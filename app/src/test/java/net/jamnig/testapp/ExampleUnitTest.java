@@ -10,5 +10,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
 public class ExampleUnitTest {
+    @Test
+    void testConcatenateStringsMethod() {
+        String first = "Hello";
+        String second = "World";
 
+        String result = MainActivity.concatenateStrings(first, second);
+
+        assertEquals("Hello World", result);
+    }
 }
