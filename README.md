@@ -71,7 +71,7 @@ jobs:
 - Im Folgenden File werden die Änderungen mit Kommentaren markiert
 ```gradle
 plugins {
-    id 'com.android.application'
+    alias(libs.plugins.androidApplication)
     // --Beide ids hinzufügen-- Auf sonarqube Version achten (Siehe Sonarcloud -> Gradle)
     id 'jacoco'
     id 'org.sonarqube' version '4.4.1.3373'
@@ -143,15 +143,18 @@ sonar {
 
 
 // Überprüfen, ob Dependencies korrekt (wahrscheinlich höher) sind und ggf. anpassen
+// Dependency-Versionen sind unter gradle/libs.version.toml
 // --Hinweis-- Mit JUnit 5 wird gearbeitet (für jacoco)
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.7.0'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.7.0'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation libs.activity
+    implementation libs.appcompat
+    implementation libs.material
+    implementation libs.constraintlayout
+    testImplementation libs.junit
+    testImplementation libs.junit.jupiter.api
+    testRuntimeOnly libs.junit.jupiter.engine
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
 }
 ```
 Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werden (Ist im Repository unter Actions) oder per Konsole mit dem Befehl **./gradlew build sonar --info**
@@ -203,7 +206,7 @@ jobs:
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
 - Weiters muss die **pom.xml** Datei erweitert werden. Da diese (hier in SE2) ebenso um Jacoco erweitert wird, muss dies ebenfalls noch beachtet werden
 - Im Folgenden File stehen die **pom.xml-Ergänzungen:**
-```maven
+```xml
     <properties>
         <java.version>17</java.version>
         <sonar.organization>**COPY_FROM_SONAR_CLOUD**</sonar.organization>
