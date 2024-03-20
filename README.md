@@ -19,7 +19,6 @@ Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben d
   
 ## Gradle Project Änderungen
 - **Projekt-Spezifikationen**:
-  - **Java Version** 17
   - **Gradle Version** 8.0
   - **Android Gradle Plugin Version** 8.3.0
   - **SDK Version (target)** 34
@@ -99,8 +98,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     // --Hinzufügen--
@@ -143,7 +142,7 @@ sonar {
 
 
 // Überprüfen, ob Dependencies korrekt (wahrscheinlich höher) sind und ggf. anpassen
-// Dependency-Versionen sind unter gradle/libs.version.toml
+// Dependency-Versionen sind unter **gradle/libs.version.toml**
 // --Hinweis-- Mit JUnit 5 wird gearbeitet (für jacoco)
 dependencies {
     implementation libs.activity
