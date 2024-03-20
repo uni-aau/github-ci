@@ -158,11 +158,14 @@ dependencies {
 ```
 Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werden (Ist im Repository unter Actions) oder per Konsole mit dem Befehl **./gradlew build sonar --info**
 
+**WICHTIG:** Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt:
+  >**Android:** Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser (gemeinsam mit @RunWith) **entfernt** werden, da der Testfall noch mit JUnit 4 läuft. JUnit 5 hat anderen Import (``org.junit.jupiter.api.*``).
+
 ## Maven Project Änderungen
 - **Projekt-Spezifikationen**:
   - **Java Version** 17
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
-- In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Gradle -> build.yml`` kopiert werden:
+- In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Maven -> build.yml`` kopiert werden:
 ```yml name: SonarCloud
 name: SonarCloud
 on:
@@ -204,7 +207,7 @@ jobs:
 ```
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
 - Weiters muss die **pom.xml** Datei erweitert werden. 
-- Die pom.xml entspricht einer neu generierten pom.xml mit **Jacoco & SonarCloud** Ergänzungen, sowie die zusätzlichen Änderungen für den Software-Engineering II Server:
+- Die pom.xml entspricht einer (via IntelliJ) neu generierten pom.xml mit **Jacoco & SonarCloud** Ergänzungen, sowie die zusätzlichen Änderungen für den Software-Engineering II Server:
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -313,11 +316,9 @@ jobs:
 ```
 
 ## Troubleshooting
-- Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt
-  - **Android:** Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser **entfernt** werden, da der Testfall noch mit JUnit 4 läuft
 - **./gradlew Permission denied**
   - Rechte müssen vergeben werden: ``chmod +x gradlew``
-  - Oder auch ``git update-index --chmod=+x gradlew``
+  - Oder auch ``git update-index --chmod=+x gradlew`` im Git-Ordner
 
 
 Bei Fehlern bitte Issue erstellen!
