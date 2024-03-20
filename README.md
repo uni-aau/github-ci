@@ -3,11 +3,13 @@
 ## Account Einrichtungen und erste Projekterstellungen
 Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben der Metriken wird Sonarcloud verwendet
 
-- Erstellung einer neuen **GitHub Organisation**
-- Erstellung eines **Repositorys** in dieser GitHub Organisation
-- Erstellung eines **SonarCloud** Accounts: https://sonarcloud.io/projects
-- Bei SonarCloud dann auf **+** klicken und **"Analyze new project"**. Hier wird die Organisation ausgewählt und dann die Repositorys, die von SonarCloud getrackt werden sollen
-- Nach der Erstellung und dem erstmaligen Scannen muss unter ``Administration -> Analysis Method "Automatic Analysis"`` **deaktiviert** werden
+1. Erstellung einer neuen **GitHub Organisation**
+2. Erstellung eines **Repositorys** in dieser GitHub Organisation
+3. Erstellung eines **SonarCloud** Accounts: https://sonarcloud.io/projects
+4. Verbindung der Organisation mit SonarCloud
+5. Selektion der mit SonarCloud zu analysierenden Repositories in dieser Organisation
+6. Bei SonarCloud dann auf **+** klicken und **"Analyze new project"**. Hier wird die Organisation ausgewählt und dann die Repositorys, die von SonarCloud getrackt werden sollen
+7. Nach der Erstellung und dem erstmaligen Scannen muss unter ``Administration -> Analysis Method "Automatic Analysis"`` **deaktiviert** werden
 
 ## Analyse via GitHub CI
 - Unter **Analysis Methods** bei SonarCloud muss nun **With GitHub Actions** ausgewählt werden
@@ -16,7 +18,13 @@ Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben d
 - Ins Feld **Name** kommt ``SONAR_TOKEN`` und bei **Value** der ``Key`` von SonarCloud
   
 ## Gradle Project Änderungen
-- In diesem Repository wurde **Java Version 17**, **Gradle Version 8.0**, **Android Gradle Plugin Version 8.3.0**, **SDK Version (target) 34** **SDK Version (min) 29** verwendet
+- **Projekt-Spezifikationen**:
+  - **Java Version** 17
+  - **Gradle Version** 8.0
+  - **Android Gradle Plugin Version** 8.3.0
+  - **SDK Version (target)** 34
+  - **SDK Version (min)** 29
+  - **Groovy DSL**
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
 - In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Gradle -> build.yml`` kopiert werden:
 ```yml name: SonarCloud
@@ -24,7 +32,7 @@ name: SonarCloud
 on:
   push:
     branches:
-      - master
+      - master # CHECK IF MAIN BRANCH NAME IS CORRECT
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -64,7 +72,7 @@ jobs:
 ```gradle
 plugins {
     id 'com.android.application'
-    // Beide ids hinzufügen - Auf sonarqube Version achten (Siehe Sonarcloud -> Gradle)
+    // --Beide ids hinzufügen-- Auf sonarqube Version achten (Siehe Sonarcloud -> Gradle)
     id 'jacoco'
     id 'org.sonarqube' version '4.4.1.3373'
 }
@@ -95,7 +103,7 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // Hinzufügen
+    // --Hinzufügen--
     testOptions {
         unitTests.all {
             useJUnitPlatform()
@@ -103,7 +111,7 @@ android {
         }
     }
 }
-// Hinzufügen + Überprüfen, ob xml.destination Path korrekt ist
+// --Hinzufügen-- + Überprüfen, ob xml.destination Path korrekt ist
 tasks.register('jacocoTestReport', JacocoReport) {
     dependsOn 'testDebugUnitTest'
 
@@ -122,7 +130,7 @@ tasks.register('jacocoTestReport', JacocoReport) {
 }
 
 // Sonarqube-Werte müssen von Sonarcloud unter Gradle kopiert werden. Diese sind individuell 
-// Hinweis - Darauf achten, dass Jacoco mitkopiert wird
+// --Hinweis-- Darauf achten, dass Jacoco mitkopiert wird
 sonar {
     properties {
         property "sonar.projectKey", "uni-aau_github-ci"
@@ -134,8 +142,8 @@ sonar {
 }
 
 
-// Überprüfen, ob Dependencies korrekt (und wsl höher) sind und ggf. anpassen
-// Hinweis - Mit JUnit 5 wird gearbeitet (für jacoco)
+// Überprüfen, ob Dependencies korrekt (wahrscheinlich höher) sind und ggf. anpassen
+// --Hinweis-- Mit JUnit 5 wird gearbeitet (für jacoco)
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
@@ -147,6 +155,104 @@ dependencies {
 }
 ```
 Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werden (Ist im Repository unter Actions) oder per Konsole mit dem Befehl **./gradlew build sonar --info**
+
+## Maven Project Änderungen
+- **Projekt-Spezifikationen**:
+  - **Java Version** 17
+- Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
+- In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Gradle -> build.yml`` kopiert werden:
+```yml name: SonarCloud
+name: SonarCloud
+on:
+  push:
+    branches:
+      - main  # CHECK IF MAIN BRANCH NAME IS CORRECT
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17
+          distribution: 'zulu' # Alternative distribution options are available.
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build and analyze
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=AAU-SE2_WebSocketDemo-Server
+```
+**Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
+- Weiters muss die **pom.xml** Datei erweitert werden. Da diese (hier in SE2) ebenso um Jacoco erweitert wird, muss dies ebenfalls noch beachtet werden
+- Im Folgenden File stehen die **pom.xml-Ergänzungen:**
+```maven
+    <properties>
+        <java.version>17</java.version>
+        <sonar.organization>**COPY_FROM_SONAR_CLOUD**</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.build.directory}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>5.10.2</version>
+            <scope>test</scope>
+        </dependency>
+      </dependencies>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.8.11</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>report</id>
+                <phase>test</phase>
+                <goals>
+                  <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+    </build>
+```
 
 ## Troubleshooting
 - Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt
