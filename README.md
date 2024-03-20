@@ -204,10 +204,33 @@ jobs:
         run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=AAU-SE2_WebSocketDemo-Server
 ```
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
-- Weiters muss die **pom.xml** Datei erweitert werden. Da diese (hier in SE2) ebenso um Jacoco erweitert wird, muss dies ebenfalls noch beachtet werden
-- Im Folgenden File stehen die **pom.xml-Ergänzungen:**
+- Weiters muss die **pom.xml** Datei erweitert werden. 
+- Die pom.xml entspricht einer neu generierten pom.xml mit **Jacoco & SonarCloud** Ergänzungen, sowie die zusätzlichen Änderungen für den Software-Engineering II Server:
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- ZUSÄTZLICH FÜR SE II -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.2.3</version>
+        <relativePath/> <!-- lookup parent from repository -->
+    </parent>
+
+    <!-- Zu den Projekt spezifischen Daten abändern -->
+    <groupId>net.jamnig</groupId>
+    <artifactId>server</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
     <properties>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- HINZUFÜGEN -->
         <java.version>17</java.version>
         <sonar.organization>**COPY_FROM_SONAR_CLOUD**</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -217,6 +240,7 @@ jobs:
     </properties>
 
     <dependencies>
+        <!-- HINZUFÜGEN -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
@@ -224,6 +248,7 @@ jobs:
             <scope>test</scope>
         </dependency>
 
+        <!-- HINZUFÜGEN -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -232,6 +257,30 @@ jobs:
         </dependency>
       </dependencies>
 
+        <!-- ZUSÄTZLICH FÜR SE II -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+            <version>3.2.3</version>
+        </dependency>
+
+        <!-- ZUSÄTZLICH FÜR SE II -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <version>3.2.3</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- ZUSÄTZLICH FÜR SE II -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>provided</scope>
+        </dependency>
+
+      <!-- HINZUFÜGEN -->
       <build>
         <plugins>
           <plugin>
@@ -253,14 +302,21 @@ jobs:
               </execution>
             </executions>
           </plugin>
+          
+            <!-- ZUSÄTZLICH FÜR SE II -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
+</project>
 ```
 
 ## Troubleshooting
 - Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt
-  - Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser **entfernt** werden, da der Testfall noch mit JUnit 4 läuft
-- ./gradlew Permission denied
+  - **Android:** Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser **entfernt** werden, da der Testfall noch mit JUnit 4 läuft
+- **./gradlew Permission denied**
   - Rechte müssen vergeben werden: ``chmod +x gradlew``
   - Oder auch ``git update-index --chmod=+x gradlew``
 
