@@ -142,17 +142,28 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         "**/*Test*.*",
         "android/**/*.*"
     )
-    val debugTree = fileTree(
-        mapOf(
-            "dir" to layout.buildDirectory.dir("intermediates/javac/debug").get().asFile,
-            "excludes" to fileFilter
-        )
+
+    val debugTree =
+        fileTree("${project.layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+            exclude(fileFilter)
+        }
+
+    val javaDebugTree =
+        fileTree("${project.layout.buildDirectory.get().asFile}/intermediates/javac/debug") {
+            exclude(fileFilter)
+        }
+
+    val mainSrc = listOf(
+        "${project.projectDir}/src/main/java",
+        "${project.projectDir}/src/main/kotlin"
     )
-    val mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.setFrom(files(mainSrc))
-    classDirectories.setFrom(files(debugTree))
-    executionData.setFrom(files("${layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec"))
+    classDirectories.setFrom(files(debugTree, javaDebugTree))
+    executionData.setFrom(fileTree(project.layout.buildDirectory.get().asFile) {
+        include("jacoco/testDebugUnitTest.exec")
+        include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+    })
 }
 
 // Sonarqube-Werte müssen von Sonarcloud unter Gradle kopiert werden. Diese sind individuell 
