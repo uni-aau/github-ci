@@ -82,8 +82,11 @@ tasks.register<JacocoReport>("jacocoTestReport") {
     )
 
     sourceDirectories.setFrom(files(mainSrc))
-    classDirectories.setFrom(files(debugTree))
-    executionData.setFrom(files("${project.layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec"))
+    classDirectories.setFrom(files(debugTree, javaDebugTree))
+    executionData.setFrom(fileTree(project.layout.buildDirectory.get().asFile) {
+        include("jacoco/testDebugUnitTest.exec")
+        include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+    })
 }
 
 sonar {
