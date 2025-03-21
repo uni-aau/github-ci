@@ -11,7 +11,9 @@ import org.junit.jupiter.api.Assertions.*
  */
 class ExampleUnitTest {
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    fun testAddition() {
+        val calculator = CoverageTest()
+        val result = calculator.add(2, 3)
+        assertEquals(5, result)
     }
 }
