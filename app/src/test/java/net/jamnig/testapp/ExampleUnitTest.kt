@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Assertions.*
 class ExampleUnitTest {
     @Test
     fun testAddition() {
-        val calculator = CoverageTest()
+        val calculator = Coverage()
         val result = calculator.add(2, 3)
         assertEquals(5, result)
     }
