@@ -57,25 +57,15 @@ tasks.register<JacocoReport>("jacocoTestReport") {
         xml.outputLocation.set(file("${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
     }
 
-    val fileFilter = listOf(
-        "**/R.class",
-        "**/R$*.class",
-        "**/BuildConfig.*",
-        "**/Manifest*.*",
-        "**/*Test*.*",
-        "android/**/*.*"
-    )
-    val debugTree = fileTree(
-        mapOf(
-            "dir" to layout.buildDirectory.dir("intermediates/javac/debug").get().asFile,
-            "excludes" to fileFilter
-        )
-    )
+    val fileFilter = listOf("**/R.class", "**/R$*.class", "**/BuildConfig.*", "**/Manifest*.*", "**/*Test*.*", "android/**/*.*")
+    val debugTree = fileTree("${project.layout.buildDirectory.get().asFile}/intermediates/javac/debug") {
+        exclude(fileFilter)
+    }
     val mainSrc = "${project.projectDir}/src/main/java"
 
     sourceDirectories.setFrom(files(mainSrc))
     classDirectories.setFrom(files(debugTree))
-    executionData.setFrom(files("${layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec"))
+    executionData.setFrom(files("${project.layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec"))
 }
 
 sonar {
