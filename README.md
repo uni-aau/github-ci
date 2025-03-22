@@ -256,8 +256,7 @@ jobs:
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
 - Weiters muss die **pom.xml** Datei erweitert werden. 
 - Die pom.xml entspricht einer (via IntelliJ) neu generierten pom.xml mit **Jacoco & SonarCloud** Ergänzungen, sowie die zusätzlichen Änderungen für den Software-Engineering II Server:
-  
-**TODOODODODODODO**
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -277,6 +276,8 @@ jobs:
     <groupId>net.jamnig</groupId>
     <artifactId>server</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>Demo</name>
+    <description>Demo Server</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -291,36 +292,32 @@ jobs:
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
+    <!-- HINZUFÜGEN -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.12.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-        <!-- HINZUFÜGEN -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- HINZUFÜGEN -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.2</version>
-            <scope>test</scope>
-        </dependency>
-      </dependencies>
-
         <!-- ZUSÄTZLICH FÜR SE II -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
-            <version>3.2.3</version>
+            <version>3.4.3</version>
         </dependency>
 
         <!-- ZUSÄTZLICH FÜR SE II -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>3.2.3</version>
+            <version>3.4.3</version>
             <scope>test</scope>
         </dependency>
 
@@ -328,17 +325,37 @@ jobs:
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
+            <version>1.18.36</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- HINZUFÜGEN -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- HINZUFÜGEN -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+      </dependencies>
 
       <!-- HINZUFÜGEN -->
       <build>
         <plugins>
+              <!-- ZUSÄTZLICH FÜR SE II -->
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+           </plugin>
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.11</version>
+            <version>0.8.12</version>
             <executions>
               <execution>
                 <goals>
@@ -354,12 +371,6 @@ jobs:
               </execution>
             </executions>
           </plugin>
-          
-            <!-- ZUSÄTZLICH FÜR SE II -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
         </plugins>
     </build>
 </project>
