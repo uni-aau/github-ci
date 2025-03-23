@@ -1,5 +1,5 @@
 # GitHub CI-SonarCloud Erklärung
->:warning: Eine funktionierende CI mit den Konfigurationen unten beschrieben kann in diesem Repository gefunden werden :warning:
+>:warning: Eine funktionierende CI für ein Gradle Android Kotlin Projekt mit den unten beschriebenen Konfigurationen für Software Engineering II kann in diesem Repository gefunden werden. :warning:
 ## Account Einrichtungen und erste Projekterstellungen
 Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben der Metriken wird Sonarcloud verwendet
 
@@ -19,19 +19,19 @@ Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben d
   
 ## Gradle Project Änderungen
 - **Projekt-Spezifikationen**:
-  - **Gradle Version** 8.0
-  - **Android Gradle Plugin Version** 8.3.0
-  - **SDK Version (target)** 34
-  - **SDK Version (min)** 29
-  - **Groovy DSL**
+  - **Gradle Version** 8.11.1
+  - **Android Gradle Plugin Version (agp)** 8.9.0
+  - **SDK Version (target)** 35
+  - **SDK Version (min)** 30
+  - **Kotlin DSL**
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
 - In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Gradle -> build.yml`` kopiert werden:
 ```yml name: SonarCloud
-name: SonarCloud
+name: SonarQube
 on:
   push:
     branches:
-      - master # CHECK IF MAIN BRANCH NAME IS CORRECT
+      - main # CHECK YOUR BRANCH NAME
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -39,104 +39,145 @@ jobs:
     name: Build and analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: 'zulu' # Alternative distribution options are available
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v3
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache Gradle packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
       - name: Build and analyze
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew build sonar --info
 ```
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
-- Weiters muss die **app/build.gradle** Datei erweitert werden. Da diese (hier in SE2) ebenso um Jacoco erweitert wird, muss dies ebenfalls noch beachtet werden
+- Weiters muss die **app/build.gradle.kts** Datei erweitert werden. Da diese (hier in SE2) ebenso um Jacoco erweitert wird, muss dies ebenfalls noch beachtet werden
 - Im Folgenden File werden die Änderungen mit Kommentaren markiert
 ```gradle
 plugins {
-    alias(libs.plugins.androidApplication)
-    // --Beide ids hinzufügen-- Auf sonarqube Version achten (Siehe Sonarcloud -> Gradle)
-    id 'jacoco'
-    id 'org.sonarqube' version '4.4.1.3373'
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    // --Beide ids hinzufügen-- Auf sonarqube Version achten (6.X) ist derzeit nicht kompatibel!
+    id("jacoco")
+    id("org.sonarqube") version "5.1.0.4882"
 }
 
 android {
     // Werte müssen mit diesen aus der eigenen App übernommen werden
-    namespace 'net.jamnig.testapp'
-    compileSdk 34
+    namespace = "net.jamnig.testapp"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId "net.jamnig.testapp"
-        minSdk 29
-        targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        applicationId = "net.jamnig.testapp"
+        minSdk = 30
+        targetSdk = 35
+        versionCode = 1
+        versionName = "1.0"
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
+
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    kotlinOptions {
+        jvmTarget = "11"
+    }
+    buildFeatures {
+        compose = true
     }
 
     // --Hinzufügen--
     testOptions {
-        unitTests.all {
-            useJUnitPlatform()
-            finalizedBy jacocoTestReport
+        unitTests {
+            all {
+                it.useJUnitPlatform()
+                it.finalizedBy(tasks.named("jacocoTestReport"))
+            }
         }
     }
 }
+
 // --Hinzufügen-- + Überprüfen, ob xml.destination Path korrekt ist
-tasks.register('jacocoTestReport', JacocoReport) {
-    dependsOn 'testDebugUnitTest'
+tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testDebugUnitTest")
 
     reports {
-        xml.required = true
-        xml.destination file("${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml")
+        xml.required.set(true)
+        xml.outputLocation.set(file("${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"))
     }
 
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${project.layout.buildDirectory.get().asFile}/intermediates/javac/debug", excludes: fileFilter)
-    def mainSrc = "${project.projectDir}/src/main/java"
+    val fileFilter = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*Test*.*",
+        "android/**/*.*"
+    )
 
-    sourceDirectories.from = files([mainSrc])
-    classDirectories.from = files([debugTree])
-    executionData.from = files("${project.layout.buildDirectory.get().asFile}/jacoco/testDebugUnitTest.exec")
+    val debugTree =
+        fileTree("${project.layout.buildDirectory.get().asFile}/tmp/kotlin-classes/debug") {
+            exclude(fileFilter)
+        }
+
+    val javaDebugTree =
+        fileTree("${project.layout.buildDirectory.get().asFile}/intermediates/javac/debug") {
+            exclude(fileFilter)
+        }
+
+    val mainSrc = listOf(
+        "${project.projectDir}/src/main/java",
+        "${project.projectDir}/src/main/kotlin"
+    )
+
+    sourceDirectories.setFrom(files(mainSrc))
+    classDirectories.setFrom(files(debugTree, javaDebugTree))
+    executionData.setFrom(fileTree(project.layout.buildDirectory.get().asFile) {
+        include("jacoco/testDebugUnitTest.exec")
+        include("outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+    })
 }
 
 // Sonarqube-Werte müssen von Sonarcloud unter Gradle kopiert werden. Diese sind individuell 
-// --Hinweis-- Darauf achten, dass Jacoco mitkopiert wird
+// --Hinweis-- Darauf achten, dass Jacoco ebenfalls hinzugefügt wird
 sonar {
     properties {
-        property "sonar.projectKey", "uni-aau_github-ci"
-        property "sonar.organization", "uni-aau"
-        property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.java.coveragePlugin", "jacoco"
-        property "sonar.coverage.jacoco.xmlReportPaths", "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        property("sonar.projectKey", "uni-aau_github-ci")
+        property("sonar.organization", "uni-aau")
+        property("sonar.host.url", "https://sonarcloud.io")
+        property("sonar.java.coveragePlugin", "jacoco")
+        property(
+            "sonar.coverage.jacoco.xmlReportPaths",
+            "${project.projectDir}/build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml"
+        )
     }
 }
 
@@ -145,15 +186,23 @@ sonar {
 // Dependency-Versionen sind unter **gradle/libs.version.toml**
 // --Hinweis-- Mit JUnit 5 wird gearbeitet (für jacoco)
 dependencies {
-    implementation libs.activity
-    implementation libs.appcompat
-    implementation libs.material
-    implementation libs.constraintlayout
-    testImplementation libs.junit
-    testImplementation libs.junit.jupiter.api
-    testRuntimeOnly libs.junit.jupiter.engine
-    androidTestImplementation libs.ext.junit
-    androidTestImplementation libs.espresso.core
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    testImplementation(libs.junit)
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 ```
 Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werden (Ist im Repository unter Actions) oder per Konsole mit dem Befehl **./gradlew build sonar --info**
@@ -161,17 +210,17 @@ Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werd
 **WICHTIG:** Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt:
   >**Android:** Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser (gemeinsam mit @RunWith) **entfernt** werden, da der Testfall noch mit JUnit 4 läuft. JUnit 5 hat anderen Import (``org.junit.jupiter.api.*``).
 
-## Maven Project Änderungen
+## Maven Java Spring Boot Project Änderungen
 - **Projekt-Spezifikationen**:
   - **Java Version** 17
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
 - In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Maven -> build.yml`` kopiert werden:
 ```yml name: SonarCloud
-name: SonarCloud
+name: SonarQube
 on:
   push:
     branches:
-      - main  # CHECK IF MAIN BRANCH NAME IS CORRECT
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 jobs:
@@ -179,35 +228,35 @@ jobs:
     name: Build and analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: 17
           distribution: 'zulu' # Alternative distribution options are available.
-      - name: Cache SonarCloud packages
-        uses: actions/cache@v3
+      - name: Cache SonarQube packages
+        uses: actions/cache@v4
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache Maven packages
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Build and analyze
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=AAU-SE2_WebSocketDemo-Server
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=SE-II-group-new_testing-4
 ```
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
 - Weiters muss die **pom.xml** Datei erweitert werden. 
 - Die pom.xml entspricht einer (via IntelliJ) neu generierten pom.xml mit **Jacoco & SonarCloud** Ergänzungen, sowie die zusätzlichen Änderungen für den Software-Engineering II Server:
+
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -227,6 +276,8 @@ jobs:
     <groupId>net.jamnig</groupId>
     <artifactId>server</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>Demo</name>
+    <description>Demo Server</description>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -241,36 +292,32 @@ jobs:
         </sonar.coverage.jacoco.xmlReportPaths>
     </properties>
 
+    <!-- HINZUFÜGEN -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.12.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
-        <!-- HINZUFÜGEN -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>5.10.2</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- HINZUFÜGEN -->
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <version>5.10.2</version>
-            <scope>test</scope>
-        </dependency>
-      </dependencies>
-
         <!-- ZUSÄTZLICH FÜR SE II -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
-            <version>3.2.3</version>
+            <version>3.4.3</version>
         </dependency>
 
         <!-- ZUSÄTZLICH FÜR SE II -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>3.2.3</version>
+            <version>3.4.3</version>
             <scope>test</scope>
         </dependency>
 
@@ -278,17 +325,37 @@ jobs:
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
+            <version>1.18.36</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- HINZUFÜGEN -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- HINZUFÜGEN -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+      </dependencies>
 
       <!-- HINZUFÜGEN -->
       <build>
         <plugins>
+              <!-- ZUSÄTZLICH FÜR SE II -->
+          <plugin>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-maven-plugin</artifactId>
+           </plugin>
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.11</version>
+            <version>0.8.12</version>
             <executions>
               <execution>
                 <goals>
@@ -304,12 +371,6 @@ jobs:
               </execution>
             </executions>
           </plugin>
-          
-            <!-- ZUSÄTZLICH FÜR SE II -->
-            <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
         </plugins>
     </build>
 </project>
