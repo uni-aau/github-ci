@@ -127,6 +127,8 @@ android {
 
 // --Hinzufügen-- + Überprüfen, ob xml.destination Path korrekt ist
 tasks.register<JacocoReport>("jacocoTestReport") {
+    group = "verification"
+    description = "Generates code coverage report for the test task."
     dependsOn("testDebugUnitTest")
 
     reports {
@@ -195,8 +197,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     testImplementation(libs.junit)
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
+    testImplementation(libs.junit.jupiter.api)  // HINZUFÜGEN
+    testRuntimeOnly(libs.junit.jupiter.engine)  // HINZUFÜGEN
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -205,10 +207,28 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 }
 ```
-Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werden (Ist im Repository unter Actions) oder per Konsole mit dem Befehl **./gradlew build sonar --info**
 
-**WICHTIG:** Da die App mit einer leeren Aktivität mit Android Studio erstellt wurde, wird automatisch ein Testfall hinzugefügt:
-  >**Android:** Unter ``app/src/test/.../ExampleUnitTest.java`` muss dieser (gemeinsam mit @RunWith) **entfernt** werden, da der Testfall noch mit JUnit 4 läuft. JUnit 5 hat anderen Import (``org.junit.jupiter.api.*``).
+In **gradle/libs.version.toml** muss folgendes hinzugefügt werden:
+```toml
+junitJupiterApi = "5.7.0"
+
+[libraries]
+junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiterApi" }
+junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitJupiterApi" }
+```
+
+Zum Schluss muss unter ``app/src/test/.../ExampleUnitTest.kt`` der richtige JUnit 5 Import genutzt werden. Dies ist ebenfalls für die restlichen Testklassen in Zukunft wichtig. JUnit 5 hat den folgenden Import (``org.junit.jupiter.api.*``)
+
+```kotlin
+import org.junit.jupiter.api.Test
+
+import org.junit.jupiter.api.Assertions.*
+```
+
+
+
+
+Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werden (Ist im Repository unter Actions) oder per Konsole mit dem Befehl **./gradlew build sonar --info**
 
 ## Maven Java Spring Boot Project Änderungen
 - **Projekt-Spezifikationen**:
