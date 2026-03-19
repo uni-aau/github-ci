@@ -196,9 +196,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    testImplementation(platform(libs.junit.bom)) // HINZUFÜGEN
     testImplementation(libs.junit)
-    testImplementation(libs.junit.jupiter.api)  // HINZUFÜGEN
-    testRuntimeOnly(libs.junit.jupiter.engine)  // HINZUFÜGEN
+    testImplementation(libs.junit.jupiter.api) // HINZUFÜGEN
+    testRuntimeOnly(libs.junit.platform.launcher) // HINZUFÜGEN
+    testRuntimeOnly(libs.junit.jupiter.engine) // HINZUFÜGEN
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -213,6 +215,8 @@ In **gradle/libs.version.toml** muss folgendes hinzugefügt werden:
 junitJupiterApi = "6.0.3"
 
 [libraries]
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junitJupiterApi" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitJupiterApi" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiterApi" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitJupiterApi" }
 ```
