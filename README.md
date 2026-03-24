@@ -19,9 +19,9 @@ Kurze Erklärungsschritte für zukünftige CIs in diese Richtung. Zum Ausgeben d
   
 ## Gradle Project Änderungen
 - **Projekt-Spezifikationen**:
-  - **Gradle Version** 8.11.1
-  - **Android Gradle Plugin Version (agp)** 8.9.0
-  - **SDK Version (target)** 35
+  - **Gradle Version** 8.13
+  - **Android Gradle Plugin Version (agp)** 8.13.0
+  - **SDK Version (target)** 36
   - **SDK Version (min)** 30
   - **Kotlin DSL**
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
@@ -39,22 +39,22 @@ jobs:
     name: Build and analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0 
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
-          distribution: 'zulu' # Alternative distribution options are available
+          distribution: 'zulu'
       - name: Cache SonarQube packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
@@ -72,7 +72,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    // --Beide ids hinzufügen-- Auf sonarqube Version achten (6.X) ist derzeit nicht kompatibel!
+    // --Beide ids hinzufügen-- Auf sonarqube Version achten (>5.X) ist derzeit (März 2026) nicht kompatibel!
     id("jacoco")
     id("org.sonarqube") version "5.1.0.4882"
 }
@@ -80,12 +80,16 @@ plugins {
 android {
     // Werte müssen mit diesen aus der eigenen App übernommen werden
     namespace = "net.jamnig.testapp"
-    compileSdk = 35
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
 
     defaultConfig {
         applicationId = "net.jamnig.testapp"
         minSdk = 30
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -101,19 +105,16 @@ android {
             )
         }
     }
-
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
+        viewBinding = true
     }
-
+    
     // --Hinzufügen--
     testOptions {
         unitTests {
@@ -125,7 +126,10 @@ android {
     }
 }
 
-// --Hinzufügen-- + Überprüfen, ob xml.destination Path korrekt ist
+kotlin {
+    jvmToolchain(17)
+}
+
 tasks.register<JacocoReport>("jacocoTestReport") {
     group = "verification"
     description = "Generates code coverage report for the test task."
@@ -183,10 +187,6 @@ sonar {
     }
 }
 
-
-// Überprüfen, ob Dependencies korrekt (wahrscheinlich höher) sind und ggf. anpassen
-// Dependency-Versionen sind unter **gradle/libs.version.toml**
-// --Hinweis-- Mit JUnit 5 wird gearbeitet (für jacoco)
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -196,9 +196,11 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    testImplementation(platform(libs.junit.bom)) // HINZUFÜGEN
     testImplementation(libs.junit)
-    testImplementation(libs.junit.jupiter.api)  // HINZUFÜGEN
-    testRuntimeOnly(libs.junit.jupiter.engine)  // HINZUFÜGEN
+    testImplementation(libs.junit.jupiter.api) // HINZUFÜGEN
+    testRuntimeOnly(libs.junit.platform.launcher) // HINZUFÜGEN
+    testRuntimeOnly(libs.junit.jupiter.engine) // HINZUFÜGEN
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -210,14 +212,16 @@ dependencies {
 
 In **gradle/libs.version.toml** muss folgendes hinzugefügt werden:
 ```toml
-junitJupiterApi = "5.7.0"
+junitJupiterApi = "6.0.3"
 
 [libraries]
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junitJupiterApi" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher", version.ref = "junitJupiterApi" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junitJupiterApi" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junitJupiterApi" }
 ```
 
-Zum Schluss muss unter ``app/src/test/.../ExampleUnitTest.kt`` der richtige JUnit 5 Import genutzt werden. Dies ist ebenfalls für die restlichen Testklassen in Zukunft wichtig. JUnit 5 hat den folgenden Import (``org.junit.jupiter.api.*``)
+Zum Schluss muss unter ``app/src/test/.../ExampleUnitTest.kt`` der richtige JUnit 6 Import genutzt werden. Dies ist ebenfalls für die restlichen Testklassen in Zukunft wichtig. JUnit 6 hat den folgenden Import (``org.junit.jupiter.api.*``)
 
 ```kotlin
 import org.junit.jupiter.api.Test
@@ -232,7 +236,7 @@ Nun kann die CI entweder mittels **GitHub CI** bei jedem Commit getriggered werd
 
 ## Maven Java Spring Boot Project Änderungen
 - **Projekt-Spezifikationen**:
-  - **Java Version** 17
+  - **Java Version** 21
 - Im Hauptordner wird ein **.github/workflows** Ordner hinzugefügt
 - In diesen wird eine **build.yml** Datei erstellt. Diese kann via ``Administration -> Analysis Method -> Github Actions -> Maven -> build.yml`` kopiert werden:
 ```yml name: SonarCloud
@@ -248,30 +252,31 @@ jobs:
     name: Build and analyze
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+          fetch-depth: 0
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
         with:
-          java-version: 17
-          distribution: 'zulu' # Alternative distribution options are available.
-      - name: Cache SonarQube packages
-        uses: actions/cache@v4
+          java-version: 21
+          distribution: 'zulu'
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v5
         with:
           path: ~/.sonar/cache
           key: ${{ runner.os }}-sonar
           restore-keys: ${{ runner.os }}-sonar
       - name: Cache Maven packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Build and analyze
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=SE-II-group-new_testing-4
+        run: mvn -B verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar
 ```
 **Hinweis**: Auf den korrekten **Branch-Namen** muss geachtet werden
 - Weiters muss die **pom.xml** Datei erweitert werden. 
@@ -288,7 +293,7 @@ jobs:
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <version>4.0.3</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
 
@@ -300,12 +305,15 @@ jobs:
     <description>Demo Server</description>
 
     <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- HINZUFÜGEN -->
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <sonar.organization>**COPY_FROM_SONAR_CLOUD**</sonar.organization>
+      <!-- The projectKey is in the last line of the build.yml template when you create the sonar project -->
+      <!-- Or just write ORGANIZATION-NAME_REPO-NAME -->
+      <sonar.projectKey>*COPY_FROM_SONAR_CLOUD**</sonar.projectKey>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.coverage.jacoco.xmlReportPaths>
             ${project.build.directory}/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
@@ -318,7 +326,7 @@ jobs:
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.12.1</version>
+                <version>6.0.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -330,14 +338,14 @@ jobs:
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
-            <version>3.4.3</version>
+            <version>4.0.3</version>
         </dependency>
 
         <!-- ZUSÄTZLICH FÜR SE II -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <version>3.4.3</version>
+            <version>4.0.3</version>
             <scope>test</scope>
         </dependency>
 
@@ -375,7 +383,7 @@ jobs:
           <plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.8.12</version>
+            <version>0.8.14</version>
             <executions>
               <execution>
                 <goals>
